@@ -9,6 +9,10 @@ import { RedisModule } from '@nestjs-modules/ioredis';
 import { BullModule } from '@nestjs/bullmq';
 import { AuthModule } from './auth/auth.module';
 import { PulseModule } from './pulse/pulse.module';
+import { PingModule } from './ping/ping.module';
+import { FlairModule } from './flair/flair.module';
+import { MailModule } from './mail/mail.module';
+import { LogModule } from './log/log.module';
 
 @Module({
   imports: [
@@ -34,6 +38,7 @@ import { PulseModule } from './pulse/pulse.module';
         },
       }),
     }),
+
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -48,6 +53,10 @@ import { PulseModule } from './pulse/pulse.module';
     UserModule,
     AuthModule,
     PulseModule,
+    PingModule,
+    FlairModule,
+    MailModule,
+    LogModule,
   ],
   controllers: [AppController],
   providers: [AppService],

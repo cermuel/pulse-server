@@ -6,6 +6,8 @@ import {
   OneToMany,
 } from 'typeorm';
 import { PulseEntity } from './pulse.entity';
+import { FlairEntity } from './flair.entity';
+import { MailEntity } from './mail.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity {
@@ -33,6 +35,21 @@ export class UserEntity {
   @CreateDateColumn()
   createdAt: Date;
 
-  @OneToMany(() => PulseEntity, (pulse) => pulse.user)
+  @OneToMany(() => PulseEntity, (pulse) => pulse.user, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   pulses: PulseEntity[];
+
+  @OneToMany(() => FlairEntity, (flair) => flair.user, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
+  flairs: FlairEntity[];
+
+  @OneToMany(() => MailEntity, (mail) => mail.user, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
+  mails: MailEntity[];
 }
