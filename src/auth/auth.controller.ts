@@ -1,9 +1,11 @@
 import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
+  constructor(private readonly configService: ConfigService) {}
   @Get('github')
   @UseGuards(AuthGuard('github'))
   githubLogin() {}
@@ -11,9 +13,11 @@ export class AuthController {
   @Get('github/callback')
   @UseGuards(AuthGuard('github'))
   githubCallback(@Req() req: Request, @Res() res: Response) {
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
     req.logIn(req.user as Express.User, (err) => {
       req.session.save(() => {
-        res.redirect('http://localhost:3000/auth/callback');
+        res.redirect(`${frontendUrl}/auth/callback`);
       });
     });
   }
