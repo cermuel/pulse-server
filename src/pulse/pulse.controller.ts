@@ -31,7 +31,6 @@ export class PulseController {
   }
 
   @Get()
-
   //@ts-ignore
   getUserPulses(@Req() req: Request, @Query() params: GetPulsesParams) {
     return this.pulseService.getUserPulses(req, params);
@@ -49,6 +48,16 @@ export class PulseController {
     @Req() req: Request,
   ) {
     return this.pulseService.editPulse(id, body, req);
+  }
+
+  @Patch(':id/pause')
+  pausePulse(@Param('id') id: string) {
+    return this.pulseService.pausePulse(id);
+  }
+
+  @Patch(':id/resume')
+  resumePulse(@Param('id') id: string) {
+    return this.pulseService.resumePulse(id);
   }
 
   @Get(':id/check')

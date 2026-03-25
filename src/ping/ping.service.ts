@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PingEntity } from 'src/entities/ping.entity';
 import { PulseEntity } from 'src/entities/pulse.entity';
@@ -55,5 +55,17 @@ export class PingService {
     } else {
       await this.flairService.handlePulseDown(pulse, error || 'Flair incident');
     }
+  }
+
+  async getResponseTimes(pulseId: string) {
+    const pulse = await this.pulseRepo.findOne({ where: { id: pulseId } });
+    if (!pulse) throw new NotFoundException('No pings found for this pulse');
+
+    const times = await this.pingRepo.find({
+      where: { pulseId: pulse.id },
+      select: { responseTime: true },
+    });
+
+    return { message: 'Response time fetched successfully', times };
   }
 }

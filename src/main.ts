@@ -20,6 +20,7 @@ async function bootstrap() {
   const origin = configService.getOrThrow<string>('ORIGINS').split(',');
   const nodeEnv = configService.get<string>('NODE_ENV') ?? 'development';
   const isProd = nodeEnv === 'production';
+  const cookieDomain = configService.get<string>('COOKIE_DOMAIN');
 
   if (isProd) {
     app.getHttpAdapter().getInstance().set('trust proxy', 1);
@@ -37,6 +38,7 @@ async function bootstrap() {
     session({
       store: new RedisStore({ client: redisClient }),
       secret: configService.get<string>('SESSION_SECRET')!,
+      proxy: isProd,
       resave: false,
       saveUninitialized: false,
       cookie: {
@@ -44,6 +46,7 @@ async function bootstrap() {
         httpOnly: true,
         sameSite: isProd ? 'none' : 'lax',
         secure: isProd,
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
       },
     }),
   );

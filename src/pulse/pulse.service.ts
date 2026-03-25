@@ -125,6 +125,35 @@ export class PulseService {
     return { message: 'Pulse updated successfully', pulse };
   }
 
+  async pausePulse(id: string) {
+    let pulse = await this.pulseRepo.findOne({
+      where: { id, isActive: true },
+    });
+    if (!pulse)
+      throw new NotFoundException('Pulse not found or is already paused');
+
+    await this.pulseRepo.update({ id: pulse.id }, { isActive: false });
+    await this.pulseQueue.removeJobScheduler(pulse.id);
+
+    return { message: 'Pulse paused successfully', pulse };
+  }
+
+  async resumePulse(id: string) {
+    let pulse = await this.pulseRepo.findOne({
+      where: { id, isActive: false },
+    });
+    if (!pulse)
+      throw new NotFoundException('Pulse not found or is already active');
+
+    await this.pulseRepo.update({ id: pulse.id }, { isActive: true });
+    await this.pulseQueue.add(
+      'check-pulse',
+      { pulseId: pulse.id },
+      { jobId: pulse.id, repeat: { every: pulse.interval * 1000 } },
+    );
+    return { message: 'Pulse resumed successfully', pulse };
+  }
+
   async getUserPulses(req: Request, params: GetPulsesParams) {
     const user = req.user as UserEntity;
 
