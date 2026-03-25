@@ -12,10 +12,17 @@ export class AuthController {
 
   @Get('github/callback')
   @UseGuards(AuthGuard('github'))
+  @Get('github/callback')
+  @UseGuards(AuthGuard('github'))
   githubCallback(@Req() req: Request, @Res() res: Response) {
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+
     req.logIn(req.user as Express.User, (err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Login failed' });
+      }
+
       req.session.save(() => {
         res.redirect(`${frontendUrl}/auth/callback`);
       });

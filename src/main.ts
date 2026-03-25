@@ -18,6 +18,12 @@ async function bootstrap() {
   await redisClient.connect();
 
   const origin = configService.getOrThrow<string>('ORIGINS').split(',');
+  const nodeEnv = configService.get<string>('NODE_ENV') ?? 'development';
+  const isProd = nodeEnv === 'production';
+
+  if (isProd) {
+    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  }
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -36,7 +42,8 @@ async function bootstrap() {
       cookie: {
         maxAge: 1000 * 60 * 60 * 24,
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: isProd ? 'none' : 'lax',
+        secure: isProd,
       },
     }),
   );
