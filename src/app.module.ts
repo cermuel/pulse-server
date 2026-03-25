@@ -13,6 +13,7 @@ import { PingModule } from './ping/ping.module';
 import { FlairModule } from './flair/flair.module';
 import { MailModule } from './mail/mail.module';
 import { LogModule } from './log/log.module';
+import { PulseWorker } from './workers/pulse.worker';
 
 @Module({
   imports: [
@@ -59,6 +60,6 @@ import { LogModule } from './log/log.module';
     LogModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, PulseWorker],
 })
 export class AppModule {}

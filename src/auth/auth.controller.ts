@@ -10,8 +10,12 @@ export class AuthController {
 
   @Get('github/callback')
   @UseGuards(AuthGuard('github'))
-  githubCallback(@Req() req: Request) {
-    return req.user;
+  githubCallback(@Req() req: Request, @Res() res: Response) {
+    req.logIn(req.user as Express.User, (err) => {
+      req.session.save(() => {
+        res.redirect('http://localhost:3000/auth/callback');
+      });
+    });
   }
 
   @Post('logout')

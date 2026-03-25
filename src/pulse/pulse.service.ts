@@ -65,11 +65,26 @@ export class PulseService {
 
     pulse = await this.pulseRepo.save(pulse);
 
+    await this.pulseQueue.add(
+      'check-pulse',
+      { pulseId: pulse.id },
+      {
+        jobId: `pulse-immediate-${pulse.id}`,
+        removeOnComplete: true,
+        removeOnFail: true,
+        backoff: { type: 'exponential', delay: 2000 },
+      },
+    );
+
     await this.pulseQueue
       .add(
         'check-pulse',
         { pulseId: pulse.id },
-        { jobId: pulse.id, repeat: { every: pulse.interval * 1000 } },
+        {
+          jobId: `pulse-repeat-${pulse.id}`,
+          repeat: { every: pulse.interval * 1000 },
+          backoff: { type: 'exponential', delay: 2000 },
+        },
       )
       .then(() => console.log(`Pulse with ID: ${pulse.id} added to queue`));
 
@@ -141,12 +156,7 @@ export class PulseService {
     const user = req.user as UserEntity;
     const pulse = await this.pulseRepo.findOne({
       where: { id, userId: user.id },
-      relations: ['pings'],
-      select: {
-        pings: {
-          isUp: true,
-        },
-      },
+      relations: ['pings', 'flairs'],
     });
 
     if (!pulse) throw new NotFoundException('Pulse not found');
@@ -154,6 +164,17 @@ export class PulseService {
     return {
       message: 'Pulses fetched successfully',
       pulse,
+    };
+  }
+
+  async checkPublicId(id: string) {
+    const pulse = await this.pulseRepo.findOne({
+      where: { publicId: id },
+    });
+
+    return {
+      message: 'Code checked successfully',
+      codeAvailable: !pulse,
     };
   }
 

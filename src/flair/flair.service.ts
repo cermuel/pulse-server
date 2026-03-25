@@ -1,8 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import type { Request } from 'express';
 import { FlairEntity } from 'src/entities/flair.entity';
-import { LogEntity } from 'src/entities/log.entity';
 import { PulseEntity } from 'src/entities/pulse.entity';
+import { UserEntity } from 'src/entities/user.entity';
 import { LogService } from 'src/log/log.service';
 import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
@@ -32,7 +37,12 @@ export class FlairService {
       flair = await this.flairRepo.save(newFlair);
 
       await this.logService.newLog('service-down', error, flair.id);
-      await this.mailService.sendMail(pulse.user.email, false, pulse.userId);
+      await this.mailService.sendMail(
+        pulse.user.email,
+        false,
+        pulse.userId,
+        pulse.name || pulse.publicId,
+      );
       await this.logService.newLog(
         'email-sent',
         `Email sent to ${pulse.user.name || pulse.user.email}`,
@@ -50,10 +60,13 @@ export class FlairService {
 
     if (!flair) return;
 
-    await this.flairRepo.update(flair, {
-      isResolved: true,
-      resolvedAt: new Date(),
-    });
+    await this.flairRepo.update(
+      { id: flair.id },
+      {
+        isResolved: true,
+        resolvedAt: new Date(),
+      },
+    );
 
     await this.logService.newLog(
       'service-resolved',
@@ -64,6 +77,7 @@ export class FlairService {
       pulse.user.email,
       true,
       pulse.userId,
+      pulse.name || pulse.publicId,
     );
     if (!email) throw new BadRequestException('Error sending mail');
 
@@ -74,5 +88,23 @@ export class FlairService {
     );
 
     return flair;
+  }
+
+  async getFlair(id: string) {
+    const flair = await this.flairRepo.findOne({
+      where: { id },
+      relations: ['logs', 'pulse'],
+    });
+
+    if (!flair) throw new NotFoundException('Flair not found');
+
+    return { message: 'Flair fetched successfully', flair };
+  }
+
+  async getFlairs(req: Request) {
+    const user = req.user as UserEntity;
+    const flairs = await this.flairRepo.find({ where: { userId: user.id } });
+
+    return { message: 'Flairs fetched successfully', flairs };
   }
 }

@@ -12,7 +12,12 @@ export class PulseWorker extends WorkerHost {
     super();
   }
   async process(job: Job<{ pulseId: string }>) {
-    await this.pingService.create(job.data.pulseId);
+    try {
+      await this.pingService.create(job.data.pulseId);
+    } catch (err) {
+      console.error('Worker process error:', err);
+      throw err;
+    }
   }
 
   @OnWorkerEvent('active')
@@ -28,7 +33,8 @@ export class PulseWorker extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  async onFailed(job: Job<{ pulseId: string }>) {
+  onFailed(job: Job<{ pulseId: string }>, err: Error) {
     console.log(`Pulse with id: ${job.data.pulseId} failed`);
+    console.error(err);
   }
 }

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -11,7 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PulseService } from './pulse.service';
-import type {
+import {
   CreatePulseDTO,
   EditPulseDTO,
   GetPulsesParams,
@@ -30,12 +31,14 @@ export class PulseController {
   }
 
   @Get()
+
+  //@ts-ignore
   getUserPulses(@Req() req: Request, @Query() params: GetPulsesParams) {
     return this.pulseService.getUserPulses(req, params);
   }
 
   @Get(':id')
-  getPulse(@Req() req: Request, @Param('id') id: string) {
+  getPulse(@Req() req: Request, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.pulseService.getPulse(req, id);
   }
 
@@ -48,8 +51,13 @@ export class PulseController {
     return this.pulseService.editPulse(id, body, req);
   }
 
-  //   @Delete(':id')
-  //   deletePulse(@Param('id') id: string, @Req() req: Request) {
-  //     return this.pulseService.deletePulse(id, req);
-  //   }
+  @Get(':id/check')
+  checkPublicId(@Param('id') id: string) {
+    return this.pulseService.checkPublicId(id);
+  }
+
+  @Delete(':id')
+  deletePulse(@Param('id') id: string, @Req() req: Request) {
+    return this.pulseService.deletePulse(id, req);
+  }
 }

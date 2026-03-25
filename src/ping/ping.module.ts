@@ -16,5 +16,6 @@ import { FlairModule } from 'src/flair/flair.module';
   ],
   controllers: [PingController],
   providers: [PingService],
+  exports: [PingService],
 })
 export class PingModule {}
