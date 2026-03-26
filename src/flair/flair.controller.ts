@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { FlairService } from './flair.service';
 import type { Request } from 'express';
+import { GetPulsesParams } from 'src/dto/pulse.dto';
 
 @UseGuards(AuthGuard)
 @Controller('flair')
@@ -14,7 +15,8 @@ export class FlairController {
   }
 
   @Get()
-  getFlairs(@Req() req: Request) {
-    return this.flairService.getFlairs(req);
+  //@ts-ignore
+  getFlairs(@Req() req: Request, @Query() params: GetPulsesParams) {
+    return this.flairService.getFlairs(req, params);
   }
 }

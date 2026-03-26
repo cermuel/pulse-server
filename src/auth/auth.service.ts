@@ -14,19 +14,23 @@ export class AuthService {
     const email = profile.emails?.[0]?.value;
     const providerId = profile.id;
 
-    let user = await this.userRepo.findOne({ where: { providerId } });
+    let user = await this.userRepo.findOne({ where: { email } });
 
-    if (!user) {
-      user = this.userRepo.create({
-        name: profile.displayName || profile.username,
-        avatar: profile.photos?.[0]?.value,
-        email,
-        provider,
-        providerId,
-      });
-      await this.userRepo.save(user);
+    if (user) {
+      if (user.providerId !== providerId) {
+        await this.userRepo.update({ id: user.id }, { provider, providerId });
+      }
+      return user;
     }
 
-    return user;
+    user = this.userRepo.create({
+      name: profile.displayName || profile.username,
+      avatar: profile.photos?.[0]?.value,
+      email,
+      provider,
+      providerId,
+    });
+
+    return await this.userRepo.save(user);
   }
 }

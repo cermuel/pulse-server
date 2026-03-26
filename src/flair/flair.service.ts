@@ -5,12 +5,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { Request } from 'express';
+import { PAGE_SIZE } from 'src/constants';
+import { GetPulsesParams } from 'src/dto/pulse.dto';
 import { FlairEntity } from 'src/entities/flair.entity';
 import { PulseEntity } from 'src/entities/pulse.entity';
 import { UserEntity } from 'src/entities/user.entity';
 import { LogService } from 'src/log/log.service';
 import { MailService } from 'src/mail/mail.service';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 
 @Injectable()
 export class FlairService {
@@ -101,10 +103,31 @@ export class FlairService {
     return { message: 'Flair fetched successfully', flair };
   }
 
-  async getFlairs(req: Request) {
+  async getFlairs(req: Request, params: GetPulsesParams) {
     const user = req.user as UserEntity;
-    const flairs = await this.flairRepo.find({ where: { userId: user.id } });
 
-    return { message: 'Flairs fetched successfully', flairs };
+    const limit = params?.per_page || PAGE_SIZE;
+    const query = params?.query || '';
+    const page = params?.page || 1;
+    const skip = limit * (page - 1);
+
+    const [flairs, total] = await this.flairRepo.findAndCount({
+      where: [
+        { userId: user.id, pulse: { name: ILike(`%${query}%`) } },
+        { userId: user.id, pulse: { url: ILike(`%${query}%`) } },
+        { userId: user.id, cause: ILike(`%${query}%`) },
+      ],
+      skip,
+      take: limit,
+    });
+
+    return {
+      message: 'Flairs fetched successfully',
+      flairs,
+      total,
+      page,
+      per_page: limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }

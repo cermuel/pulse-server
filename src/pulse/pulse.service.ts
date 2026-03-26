@@ -126,7 +126,7 @@ export class PulseService {
   }
 
   async pausePulse(id: string) {
-    let pulse = await this.pulseRepo.findOne({
+    const pulse = await this.pulseRepo.findOne({
       where: { id, isActive: true },
     });
     if (!pulse)
@@ -135,11 +135,14 @@ export class PulseService {
     await this.pulseRepo.update({ id: pulse.id }, { isActive: false });
     await this.pulseQueue.removeJobScheduler(pulse.id);
 
-    return { message: 'Pulse paused successfully', pulse };
+    return {
+      message: 'Pulse paused successfully',
+      pulse: { ...pulse, isActive: false },
+    };
   }
 
   async resumePulse(id: string) {
-    let pulse = await this.pulseRepo.findOne({
+    const pulse = await this.pulseRepo.findOne({
       where: { id, isActive: false },
     });
     if (!pulse)
@@ -151,7 +154,11 @@ export class PulseService {
       { pulseId: pulse.id },
       { jobId: pulse.id, repeat: { every: pulse.interval * 1000 } },
     );
-    return { message: 'Pulse resumed successfully', pulse };
+
+    return {
+      message: 'Pulse resumed successfully',
+      pulse: { ...pulse, isActive: true },
+    };
   }
 
   async getUserPulses(req: Request, params: GetPulsesParams) {

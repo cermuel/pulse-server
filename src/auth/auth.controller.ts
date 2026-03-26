@@ -27,6 +27,27 @@ export class AuthController {
     });
   }
 
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  googleLogin() {}
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  googleCallback(@Req() req: Request, @Res() res: Response) {
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+
+    req.logIn(req.user as Express.User, (err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Login failed' });
+      }
+
+      req.session.save(() => {
+        res.redirect(`${frontendUrl}/auth/callback`);
+      });
+    });
+  }
+
   @Post('logout')
   logout(@Req() req: Request, @Res() res: Response) {
     req.logout(() => {
