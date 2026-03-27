@@ -1,5 +1,7 @@
 import {
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,6 +12,7 @@ import { PingEntity } from 'src/entities/ping.entity';
 import { PulseEntity } from 'src/entities/pulse.entity';
 import { UserEntity } from 'src/entities/user.entity';
 import { FlairService } from 'src/flair/flair.service';
+import { PulseGateway } from 'src/pulse/pulse.gateway';
 import {
   Between,
   FindOperator,
@@ -26,6 +29,8 @@ export class PingService {
     @InjectRepository(PulseEntity)
     private readonly pulseRepo: Repository<PulseEntity>,
     private readonly flairService: FlairService,
+    @Inject(forwardRef(() => PulseGateway))
+    private readonly pulseGateway: PulseGateway,
   ) {}
   async create(id: string) {
     const pulse = await this.pulseRepo.findOne({
@@ -63,6 +68,7 @@ export class PingService {
 
     await this.pingRepo.save(ping);
     await this.pulseRepo.update({ id }, { lastCheckedAt: new Date() });
+    this.pulseGateway.sendPing(pulse.userId, ping);
 
     if (isUp) {
       await this.flairService.handlePulseRecovery(pulse);

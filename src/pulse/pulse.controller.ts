@@ -20,7 +20,7 @@ import {
 import type { Request } from 'express';
 import { AuthGuard } from 'src/auth/auth.guard';
 
-@UseGuards(AuthGuard)
+// @UseGuards(AuthGuard)
 @Controller('pulse')
 export class PulseController {
   constructor(private readonly pulseService: PulseService) {}
@@ -28,6 +28,15 @@ export class PulseController {
   @Post()
   createPulse(@Body() body: CreatePulseDTO, @Req() req: Request) {
     return this.pulseService.createPulse(body, req);
+  }
+
+  @Get('rabbit')
+  testRabbit() {
+    return this.pulseService.testRabbit();
+  }
+  @Get('send-rabbit')
+  testSendRabbit() {
+    return this.pulseService.testSendRabbit();
   }
 
   @Get()

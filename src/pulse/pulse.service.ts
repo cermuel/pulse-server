@@ -1,12 +1,15 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bullmq';
 import { Request } from 'express';
+import { timeout } from 'rxjs';
 import { PAGE_SIZE } from 'src/constants';
 import {
   CreatePulseDTO,
@@ -21,12 +24,21 @@ import { ILike, Repository } from 'typeorm';
 @Injectable()
 export class PulseService {
   constructor(
+    @Inject('pulse') private readonly rabbitService: ClientProxy,
     @InjectRepository(PulseEntity)
     private readonly pulseRepo: Repository<PulseEntity>,
     @InjectQueue('check-pulse')
     private readonly pulseQueue: Queue,
   ) {}
-
+  testRabbit() {
+    this.rabbitService.emit('wagwan', { message: 'Rabbot message' });
+    return { message: 'successful rabbit' };
+  }
+  testSendRabbit() {
+    return this.rabbitService
+      .send({ cmd: 'wagwan-send' }, {})
+      .pipe(timeout(5000));
+  }
   async createPulse(dto: CreatePulseDTO, req: Request) {
     const user = req.user as UserEntity;
 

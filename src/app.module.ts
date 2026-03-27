@@ -4,7 +4,6 @@ import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { BullModule } from '@nestjs/bullmq';
 import { AuthModule } from './auth/auth.module';
@@ -14,6 +13,7 @@ import { FlairModule } from './flair/flair.module';
 import { MailModule } from './mail/mail.module';
 import { LogModule } from './log/log.module';
 import { PulseWorker } from './workers/pulse.worker';
+import { PulseGateway } from './pulse/pulse.gateway';
 
 @Module({
   imports: [
@@ -25,6 +25,7 @@ import { PulseWorker } from './workers/pulse.worker';
         url: configService.get<string>('REDIS_URL'),
       }),
     }),
+
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -60,6 +61,6 @@ import { PulseWorker } from './workers/pulse.worker';
     LogModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PulseWorker],
+  providers: [AppService, PulseWorker, PulseGateway],
 })
 export class AppModule {}
