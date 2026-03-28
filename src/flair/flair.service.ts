@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,6 +14,7 @@ import { PulseEntity } from 'src/entities/pulse.entity';
 import { UserEntity } from 'src/entities/user.entity';
 import { LogService } from 'src/log/log.service';
 import { MailService } from 'src/mail/mail.service';
+import { PulseGateway } from 'src/pulse/pulse.gateway';
 import { ILike, Repository } from 'typeorm';
 
 @Injectable()
@@ -21,6 +24,8 @@ export class FlairService {
     private readonly flairRepo: Repository<FlairEntity>,
     private readonly logService: LogService,
     private readonly mailService: MailService,
+    @Inject(forwardRef(() => PulseGateway))
+    private readonly pulseGateway: PulseGateway,
   ) {}
 
   async handlePulseDown(pulse: PulseEntity, error: string) {
@@ -52,6 +57,7 @@ export class FlairService {
       );
     }
 
+    this.pulseGateway.sendFlair(flair.userId, flair);
     return flair;
   }
 
@@ -89,6 +95,7 @@ export class FlairService {
       flair.id,
     );
 
+    this.pulseGateway.sendFlairRecovery(flair.userId, flair);
     return flair;
   }
 
