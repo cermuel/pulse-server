@@ -26,6 +26,8 @@ export class PingService {
   constructor(
     @InjectRepository(PingEntity)
     private readonly pingRepo: Repository<PingEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepo: Repository<UserEntity>,
     @InjectRepository(PulseEntity)
     private readonly pulseRepo: Repository<PulseEntity>,
     private readonly flairService: FlairService,
@@ -39,6 +41,7 @@ export class PingService {
     });
     if (!pulse) return;
     if (!pulse.isActive) return;
+
     const start = Date.now();
     let isUp = false;
     let statusCode: number | undefined = undefined;
@@ -66,14 +69,28 @@ export class PingService {
       isUp,
     });
 
+    const user = await this.userRepo.findOne({
+      where: { id: pulse.userId },
+      relations: { notification: true },
+    });
+
     await this.pingRepo.save(ping);
     await this.pulseRepo.update({ id }, { lastCheckedAt: new Date() });
-    this.pulseGateway.sendPing(pulse.userId, ping);
+    if (user?.notification.inAppPing) {
+      this.pulseGateway.sendPing(pulse.userId, ping);
+    }
+    {
+      console.log(`User not subscribed to in app pings`);
+    }
 
     if (isUp) {
-      await this.flairService.handlePulseRecovery(pulse);
+      await this.flairService.handlePulseRecovery(pulse, user);
     } else {
-      await this.flairService.handlePulseDown(pulse, error || 'Flair incident');
+      await this.flairService.handlePulseDown(
+        pulse,
+        error || 'Flair incident',
+        user,
+      );
     }
   }
 

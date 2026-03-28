@@ -8,10 +8,16 @@ import { BullModule } from '@nestjs/bullmq';
 import { FlairEntity } from 'src/entities/flair.entity';
 import { FlairModule } from 'src/flair/flair.module';
 import { PulseModule } from 'src/pulse/pulse.module';
+import { UserEntity } from 'src/entities/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PingEntity, PulseEntity, FlairEntity]),
+    TypeOrmModule.forFeature([
+      PingEntity,
+      PulseEntity,
+      FlairEntity,
+      UserEntity,
+    ]),
     BullModule.registerQueue({ name: 'check-pulse' }),
     forwardRef(() => FlairModule),
     forwardRef(() => PulseModule),

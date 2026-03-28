@@ -4,10 +4,13 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   OneToMany,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { PulseEntity } from './pulse.entity';
 import { FlairEntity } from './flair.entity';
 import { MailEntity } from './mail.entity';
+import { NotificationEntity } from './notification.entity';
 
 @Entity({ name: 'user' })
 export class UserEntity {
@@ -40,6 +43,17 @@ export class UserEntity {
     onDelete: 'CASCADE',
   })
   pulses: PulseEntity[];
+
+  @OneToOne(
+    () => NotificationEntity,
+    (notification: NotificationEntity) => notification.user,
+    { cascade: true, nullable: true },
+  )
+  @JoinColumn()
+  notification: NotificationEntity;
+
+  @Column({ nullable: true })
+  notificationId: string;
 
   @OneToMany(() => FlairEntity, (flair) => flair.user, {
     cascade: true,

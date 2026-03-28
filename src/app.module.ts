@@ -14,6 +14,7 @@ import { MailModule } from './mail/mail.module';
 import { LogModule } from './log/log.module';
 import { PulseWorker } from './workers/pulse.worker';
 import { PulseGateway } from './pulse/pulse.gateway';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { PulseGateway } from './pulse/pulse.gateway';
     FlairModule,
     MailModule,
     LogModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService, PulseWorker, PulseGateway],

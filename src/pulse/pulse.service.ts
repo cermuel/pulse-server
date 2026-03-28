@@ -126,11 +126,15 @@ export class PulseService {
     pulse = await this.pulseRepo.findOne({ where: { userId: user.id, id } });
 
     if (dto.interval && oldInterval && pulse && dto.interval !== oldInterval) {
-      await this.pulseQueue.removeJobScheduler(pulse.id);
+      await this.pulseQueue.removeJobScheduler(`pulse-repeat-${pulse.id}`);
       await this.pulseQueue.add(
         'check-pulse',
         { pulseId: pulse.id },
-        { jobId: pulse.id, repeat: { every: dto.interval * 1000 } },
+        {
+          jobId: `pulse-repeat-${pulse.id}`,
+          repeat: { every: pulse.interval * 1000 },
+          backoff: { type: 'exponential', delay: 2000 },
+        },
       );
     }
 
@@ -145,7 +149,7 @@ export class PulseService {
       throw new NotFoundException('Pulse not found or is already paused');
 
     await this.pulseRepo.update({ id: pulse.id }, { isActive: false });
-    await this.pulseQueue.removeJobScheduler(pulse.id);
+    await this.pulseQueue.removeJobScheduler(`pulse-repeat-${pulse.id}`);
 
     return {
       message: 'Pulse paused successfully',
@@ -164,9 +168,25 @@ export class PulseService {
     await this.pulseQueue.add(
       'check-pulse',
       { pulseId: pulse.id },
-      { jobId: pulse.id, repeat: { every: pulse.interval * 1000 } },
+      {
+        jobId: `pulse-immediate-${pulse.id}`,
+        removeOnComplete: true,
+        removeOnFail: true,
+        backoff: { type: 'exponential', delay: 2000 },
+      },
     );
 
+    await this.pulseQueue
+      .add(
+        'check-pulse',
+        { pulseId: pulse.id },
+        {
+          jobId: `pulse-repeat-${pulse.id}`,
+          repeat: { every: pulse.interval * 1000 },
+          backoff: { type: 'exponential', delay: 2000 },
+        },
+      )
+      .then(() => console.log(`Pulse with ID: ${pulse.id} re-added to queue`));
     return {
       message: 'Pulse resumed successfully',
       pulse: { ...pulse, isActive: true },

@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import type { Request } from 'express';
 import { EditUserDTO } from 'src/dto/user.dto';
+import { NotificationEntity } from 'src/entities/notification.entity';
 import { UserEntity } from 'src/entities/user.entity';
 
 import { Repository } from 'typeorm';
@@ -15,11 +16,18 @@ export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userEntity: Repository<UserEntity>,
+    @InjectRepository(NotificationEntity)
+    private readonly notificationEntity: Repository<NotificationEntity>,
   ) {}
 
   async getCurrentUser(req: Request) {
-    if (!req.user) throw new UnauthorizedException('User not logged in');
-    return req.user;
+    const user = req.user as UserEntity;
+    if (!user) throw new UnauthorizedException('User not logged in');
+
+    return this.userEntity.findOne({
+      where: { id: user.id },
+      relations: { notification: true },
+    });
   }
 
   async editProfile(req: Request, dto: EditUserDTO) {

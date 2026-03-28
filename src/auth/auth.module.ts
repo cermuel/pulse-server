@@ -8,10 +8,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { UserEntity } from 'src/entities/user.entity';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { NotificationEntity } from 'src/entities/notification.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, NotificationEntity]),
     PassportModule.register({ session: true }),
   ],
   providers: [AuthService, GithubStrategy, GoogleStrategy, SessionSerializer],

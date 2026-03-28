@@ -28,7 +28,11 @@ export class FlairService {
     private readonly pulseGateway: PulseGateway,
   ) {}
 
-  async handlePulseDown(pulse: PulseEntity, error: string) {
+  async handlePulseDown(
+    pulse: PulseEntity,
+    error: string,
+    user: UserEntity | null | undefined,
+  ) {
     let flair = await this.flairRepo.findOne({
       where: { pulseId: pulse.id, isResolved: false },
     });
@@ -43,25 +47,31 @@ export class FlairService {
 
       flair = await this.flairRepo.save(newFlair);
 
-      await this.logService.newLog('service-down', error, flair.id);
-      await this.mailService.sendMail(
-        pulse.user.email,
-        false,
-        pulse.userId,
-        pulse.name || pulse.publicId,
-      );
-      await this.logService.newLog(
-        'email-sent',
-        `Email sent to ${pulse.user.name || pulse.user.email}`,
-        flair.id,
-      );
+      if (user?.notification.email) {
+        await this.logService.newLog('service-down', error, flair.id);
+        await this.mailService.sendMail(
+          pulse.user.email,
+          false,
+          pulse.userId,
+          pulse.name || pulse.publicId,
+        );
+        await this.logService.newLog(
+          'email-sent',
+          `Email sent to ${pulse.user.name || pulse.user.email}`,
+          flair.id,
+        );
+      }
     }
 
-    this.pulseGateway.sendFlair(flair.userId, flair);
+    if (user?.notification.inAppFlair)
+      this.pulseGateway.sendFlair(flair.userId, flair);
     return flair;
   }
 
-  async handlePulseRecovery(pulse: PulseEntity) {
+  async handlePulseRecovery(
+    pulse: PulseEntity,
+    user: UserEntity | null | undefined,
+  ) {
     const flair = await this.flairRepo.findOne({
       where: { pulseId: pulse.id, isResolved: false },
     });
@@ -81,21 +91,24 @@ export class FlairService {
       'Flair resolved',
       flair.id,
     );
-    const email = await this.mailService.sendMail(
-      pulse.user.email,
-      true,
-      pulse.userId,
-      pulse.name || pulse.publicId,
-    );
-    if (!email) throw new BadRequestException('Error sending mail');
+    if (user?.notification.email) {
+      const email = await this.mailService.sendMail(
+        pulse.user.email,
+        true,
+        pulse.userId,
+        pulse.name || pulse.publicId,
+      );
+      if (!email) throw new BadRequestException('Error sending mail');
 
-    await this.logService.newLog(
-      'email-sent',
-      `Email sent to ${pulse.user.name || pulse.user.email}`,
-      flair.id,
-    );
+      await this.logService.newLog(
+        'email-sent',
+        `Email sent to ${pulse.user.name || pulse.user.email}`,
+        flair.id,
+      );
+    }
 
-    this.pulseGateway.sendFlairRecovery(flair.userId, flair);
+    if (user?.notification.inAppFlair)
+      this.pulseGateway.sendFlairRecovery(flair.userId, flair);
     return flair;
   }
 
