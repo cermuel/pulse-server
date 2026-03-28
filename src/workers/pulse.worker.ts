@@ -12,7 +12,6 @@ export class PulseWorker extends WorkerHost {
     super();
   }
   async process(job: Job<{ pulseId: string }>) {
-    if (process.env.NODE_ENV === 'production') return;
     try {
       await this.pingService.create(job.data.pulseId);
     } catch (err) {
@@ -23,13 +22,11 @@ export class PulseWorker extends WorkerHost {
 
   @OnWorkerEvent('active')
   async onActive(job: Job<{ pulseId: string }>) {
-    if (process.env.NODE_ENV === 'production') return;
     console.log(`Pulse with id: ${job.data.pulseId} started pinging`);
   }
 
   @OnWorkerEvent('completed')
   async onComplete(job: Job<{ pulseId: string }>) {
-    if (process.env.NODE_ENV === 'production') return;
     console.log(
       `Pulse with id: ${job.data.pulseId} completed ping round with success`,
     );
