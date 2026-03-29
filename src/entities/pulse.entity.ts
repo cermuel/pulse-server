@@ -27,7 +27,7 @@ export class PulseEntity {
     cascade: true,
     onDelete: 'CASCADE',
   })
-  pings: PingEntity;
+  pings: PingEntity[];
 
   @OneToMany(() => FlairEntity, (flair) => flair.pulse, {
     cascade: true,

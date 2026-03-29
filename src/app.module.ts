@@ -15,6 +15,7 @@ import { LogModule } from './log/log.module';
 import { PulseWorker } from './workers/pulse.worker';
 import { PulseGateway } from './pulse/pulse.gateway';
 import { NotificationModule } from './notification/notification.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { NotificationModule } from './notification/notification.module';
       useFactory: (configService: ConfigService) => ({
         connection: {
           url: configService.get<string>('REDIS_URL'),
+          retryStrategy: (times) => Math.min(times * 500, 3000),
         },
 
         defaultJobOptions: {
@@ -61,6 +63,7 @@ import { NotificationModule } from './notification/notification.module';
     MailModule,
     LogModule,
     NotificationModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PulseWorker, PulseGateway],
